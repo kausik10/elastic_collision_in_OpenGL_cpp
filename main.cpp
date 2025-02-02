@@ -35,9 +35,27 @@ void checkCollision(glm::vec3 &pos1, glm::vec3 &pos2, float &v1, float &v2,
     float newV1 = v1 * (m1 - m2) / (m1 + m2) + v2 * (2 * m2) / (m1 + m2);
     float newV2 = v2 * (m2 - m1) / (m1 + m2) + v1 * (2 * m1) / (m1 + m2);
 
-    v1 = -1 * newV1;
-    v2 = -1 * newV2;
+    v1 = newV1;
+    v2 = newV2;
   }
+}
+
+void resetSimulation(bool &isRunning, bool &parametersSet,
+                     glm::vec3 &sphere1Pos, glm::vec3 &sphere2Pos,
+                     float &sphere1MovementSpeed, float &sphere2MovementSpeed,
+                     float &sphere1Radius, float &sphere2Radius,
+                     Sphere &sphere1, Sphere &sphere2) {
+  isRunning = false;
+  parametersSet = false;
+  sphere1Pos = glm::vec3(-3.0f, sphere1Radius, 0.0f);
+  sphere2Pos = glm::vec3(3.0f, sphere2Radius, 0.0f);
+  sphere1MovementSpeed = 0.3f;
+  sphere2MovementSpeed = 0.3f;
+  sphere1Radius = 1.0f;
+  sphere2Radius = 1.0f;
+
+  sphere1 = Sphere(sphere1Radius, 36, 18);
+  sphere2 = Sphere(sphere2Radius, 36, 18);
 }
 
 int main() {
@@ -88,8 +106,8 @@ int main() {
   bool isRunning = false;
   bool parametersSet = false;
 
-  glm::vec3 sphere1Pos(-3.0f, 0.0f, 0.0f);
-  glm::vec3 sphere2Pos(3.0f, 0.0f, 0.0f);
+  glm::vec3 sphere1Pos(-3.0f, sphere1Radius - 3.0f, 0.0f);
+  glm::vec3 sphere2Pos(3.0f, sphere2Radius - 3.0f, 0.0f);
 
   Sphere sphere1(sphere1Radius, 36, 18);
   Sphere sphere2(sphere2Radius, 36, 18);
@@ -100,7 +118,7 @@ int main() {
 
     if (isRunning) {
       sphere1Pos.x += sphere1MovementSpeed * deltaTime;
-      sphere2Pos.x -= sphere2MovementSpeed * deltaTime;
+      sphere2Pos.x += sphere2MovementSpeed * deltaTime;
 
       // Check for collision
       checkCollision(sphere1Pos, sphere2Pos, sphere1MovementSpeed,
@@ -125,13 +143,13 @@ int main() {
     ImGui::NewFrame();
 
     ImGui::Begin("Sphere 1 Controls");
-    ImGui::SliderFloat("Speed", &sphere1MovementSpeed, 0.1f, 2.0f);
-    ImGui::SliderFloat("Radius", &sphere1Radius, 0.5f, 2.0f);
+    ImGui::SliderFloat("Speed", &sphere1MovementSpeed, 0.0f, 2.0f);
+    ImGui::SliderFloat("Radius", &sphere1Radius, 0.5f, 4.0f);
     ImGui::End();
 
     ImGui::Begin("Sphere 2 Controls");
-    ImGui::SliderFloat("Speed", &sphere2MovementSpeed, 0.1f, 2.0f);
-    ImGui::SliderFloat("Radius", &sphere2Radius, 0.5f, 2.0f);
+    ImGui::SliderFloat("Speed", &sphere2MovementSpeed, 0.0f, 2.0f);
+    ImGui::SliderFloat("Radius", &sphere2Radius, 0.5f, 4.0f);
     ImGui::End();
 
     ImGui::Begin("Simulation Controls");
@@ -142,10 +160,17 @@ int main() {
         new (&sphere1) Sphere(sphere1Radius, 36, 18);
         new (&sphere2) Sphere(sphere2Radius, 36, 18);
         parametersSet = true;
+        sphere1Pos.y = sphere1Radius - 3.0f; // Keep bottom aligned
+        sphere2Pos.y = sphere2Radius - 3.0f; // Keep bottom aligned
       }
     } else {
-      if (ImGui::Button(isRunning ? "Pause" : "Start")) {
+      if (ImGui::Button(isRunning ? "Pause Simulation" : "Start Simulation")) {
         isRunning = !isRunning;
+      }
+      if (ImGui::Button("Reset Simulation")) {
+        resetSimulation(isRunning, parametersSet, sphere1Pos, sphere2Pos,
+                        sphere1MovementSpeed, sphere2MovementSpeed,
+                        sphere1Radius, sphere2Radius, sphere1, sphere2);
       }
     }
     ImGui::End();

@@ -20,6 +20,26 @@ float getDeltaTime() {
   return deltaTime;
 }
 
+// Function to check and handle elastic collision
+void checkCollision(glm::vec3 &pos1, glm::vec3 &pos2, float &v1, float &v2,
+                    float r1, float r2) {
+  float distance = glm::distance(pos1, pos2);
+  float combinedRadius = r1 + r2;
+
+  if (distance <= combinedRadius) {
+    // Assume mass is proportional to radius
+    float m1 = r1;
+    float m2 = r2;
+
+    // Elastic collision velocity updates
+    float newV1 = v1 * (m1 - m2) / (m1 + m2) + v2 * (2 * m2) / (m1 + m2);
+    float newV2 = v2 * (m2 - m1) / (m1 + m2) + v1 * (2 * m1) / (m1 + m2);
+
+    v1 = -1 * newV1;
+    v2 = -1 * newV2;
+  }
+}
+
 int main() {
   if (!glfwInit()) {
     return -1;
@@ -63,16 +83,16 @@ int main() {
 
   float sphere1Radius = 1.0f;
   float sphere2Radius = 1.0f;
-
-  Sphere sphere1(sphere1Radius, 36, 18);
-  Sphere sphere2(sphere2Radius, 36, 18);
+  float sphere1MovementSpeed = 0.3f;
+  float sphere2MovementSpeed = 0.3f;
+  bool isRunning = false;
+  bool parametersSet = false;
 
   glm::vec3 sphere1Pos(-3.0f, 0.0f, 0.0f);
   glm::vec3 sphere2Pos(3.0f, 0.0f, 0.0f);
 
-  float sphere1MovementSpeed = 0.3f;
-  float sphere2MovementSpeed = 0.3f;
-  bool isRunning = false;
+  Sphere sphere1(sphere1Radius, 36, 18);
+  Sphere sphere2(sphere2Radius, 36, 18);
 
   do {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -81,6 +101,10 @@ int main() {
     if (isRunning) {
       sphere1Pos.x += sphere1MovementSpeed * deltaTime;
       sphere2Pos.x -= sphere2MovementSpeed * deltaTime;
+
+      // Check for collision
+      checkCollision(sphere1Pos, sphere2Pos, sphere1MovementSpeed,
+                     sphere2MovementSpeed, sphere1Radius, sphere2Radius);
     }
 
     glm::mat4 MVP1 =
@@ -111,8 +135,18 @@ int main() {
     ImGui::End();
 
     ImGui::Begin("Simulation Controls");
-    if (ImGui::Button(isRunning ? "Pause" : "Start")) {
-      isRunning = !isRunning;
+    if (!parametersSet) {
+      if (ImGui::Button("Set Parameters")) {
+        sphere1.~Sphere(); // Explicitly destroy old object
+        sphere2.~Sphere();
+        new (&sphere1) Sphere(sphere1Radius, 36, 18);
+        new (&sphere2) Sphere(sphere2Radius, 36, 18);
+        parametersSet = true;
+      }
+    } else {
+      if (ImGui::Button(isRunning ? "Pause" : "Start")) {
+        isRunning = !isRunning;
+      }
     }
     ImGui::End();
 
@@ -129,4 +163,3 @@ int main() {
   glfwTerminate();
   return 0;
 }
-

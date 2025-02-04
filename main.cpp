@@ -51,8 +51,8 @@ void resetSimulation(bool &isRunning, bool &parametersSet,
                      Sphere &sphere1, Sphere &sphere2) {
   isRunning = false;
   parametersSet = false;
-  sphere1Pos = glm::vec3(-3.0f, sphere1Radius, 0.0f);
-  sphere2Pos = glm::vec3(3.0f, sphere2Radius, 0.0f);
+  sphere1Pos = glm::vec3(-20.0f, sphere1Radius, 0.0f);
+  sphere2Pos = glm::vec3(-10.0f, sphere2Radius, 0.0f);
   sphere1MovementSpeed = 0.3f;
   sphere2MovementSpeed = 0.3f;
   sphere1Radius = 1.0f;
@@ -74,8 +74,10 @@ int main() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
 
-  window = glfwCreateWindow(1024, 768, "Sphere Simulation", NULL, NULL);
+
+  window = glfwCreateWindow(1920, 1080, "Sphere Simulation", NULL, NULL);
   if (!window) {
     glfwTerminate();
     return -1;
@@ -102,10 +104,18 @@ int main() {
       LoadShaders("shaders/VertexShader.glsl", "shaders/FragmentShader.glsl");
   GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 
-  glm::mat4 Projection =
-      glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
+int width, height;
+glfwGetWindowSize(window, &width, &height);
+float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
+glm::mat4 Projection = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
   glm::mat4 View =
-      glm::lookAt(glm::vec3(0, 0, 10), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+      glm::lookAt(glm::vec3(0, 0, 40), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+
+
+int fbWidth, fbHeight;
+glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+glViewport(0, 0, fbWidth, fbHeight);
+
 
   float sphere1Radius = 1.0f;
   float sphere2Radius = 1.0f;
@@ -114,8 +124,8 @@ int main() {
   bool isRunning = false;
   bool parametersSet = false;
 
-  glm::vec3 sphere1Pos(-3.0f, sphere1Radius - 3.0f, 0.0f);
-  glm::vec3 sphere2Pos(3.0f, sphere2Radius - 3.0f, 0.0f);
+  glm::vec3 sphere1Pos(-20.0f, sphere1Radius - 3.0f, 0.0f);
+  glm::vec3 sphere2Pos(-10.0f, sphere2Radius - 3.0f, 0.0f);
 
   Sphere sphere1(sphere1Radius, 36, 18);
   Sphere sphere2(sphere2Radius, 36, 18);

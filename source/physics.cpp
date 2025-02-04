@@ -160,7 +160,8 @@ void Sphere::setTexture(GLuint textureID) { this->textureID = textureID; }
 void Sphere::draw(GLuint programID, GLuint MatrixID, const glm::mat4 &MVP) {
   glUseProgram(programID);
   glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
-
+  glUniform1i(glGetUniformLocation(programID, "isGround"),
+              0); // Use texture for spheres
   glBindVertexArray(vertexArrayID);
 
   // Position attribute

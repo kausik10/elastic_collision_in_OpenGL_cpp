@@ -1,15 +1,20 @@
 #version 410 core
 #extension GL_ARB_separate_shader_objects : enable
 
-in vec3 fragColor;        // Interpolated color from vertex shader
-in vec2 TexCoord;         // Interpolated texture coordinates
+in vec3 fragColor;        
+in vec2 TexCoord;         
 
-out vec4 FragColor;       // Final output color
+out vec4 FragColor;       
 
-uniform sampler2D texture1; // Texture sampler
+uniform sampler2D textureSampler; 
+uniform bool isGround;  // New uniform to check if it's the ground
 
 void main() {
-    vec4 texColor = texture(texture1, TexCoord); // Sample texture
-    FragColor = texColor; // Use texture color (or mix it with fragColor)
+    if (isGround) {
+        vec4 texColor = texture(textureSampler, TexCoord); 
+    } else {
+        vec4 texColor = texture(textureSampler, TexCoord); 
+        FragColor = texColor;
+    }
 }
 

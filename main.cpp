@@ -66,6 +66,68 @@ void resetSimulation(bool &isRunning, bool &parametersSet,
   sphere2 = Sphere(sphere2Radius, 36, 18);
 }
 
+// Add ground plane vertex data
+float groundVertices[] = {
+    // Positions          // Texture Coords
+    -50.0f, -3.0f, -50.0f, 0.0f, 0.0f, // Bottom-left
+    50.0f,  -3.0f, -50.0f, 1.0f, 0.0f, // Bottom-right
+    50.0f,  -3.0f, 50.0f,  1.0f, 1.0f, // Top-right
+    -50.0f, -3.0f, 50.0f,  0.0f, 1.0f  // Top-left
+};
+
+unsigned int groundIndices[] = {
+    0, 1, 2, // First triangle
+    2, 3, 0  // Second triangle
+};
+
+// Function to create and configure the ground plane VAO and VBO
+void setupGroundPlane(GLuint &groundVAO, GLuint &groundVBO, GLuint &groundEBO) {
+  glGenVertexArrays(1, &groundVAO);
+  glGenBuffers(1, &groundVBO);
+  glGenBuffers(1, &groundEBO);
+
+  glBindVertexArray(groundVAO);
+
+  glBindBuffer(GL_ARRAY_BUFFER, groundVBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(groundVertices), groundVertices,
+               GL_STATIC_DRAW);
+
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, groundEBO);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(groundIndices), groundIndices,
+               GL_STATIC_DRAW);
+
+  // Position attribute
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(0);
+
+  // Texture coordinate attribute
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+                        (void *)(3 * sizeof(float)));
+  glEnableVertexAttribArray(1);
+
+  glBindVertexArray(0);
+}
+
+// Function to render the ground plane
+void renderGroundPlane(GLuint groundVAO, GLuint groundTexture, GLuint programID,
+                       GLuint MatrixID, glm::mat4 MVP) {
+  glUseProgram(programID);
+  glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
+
+  // Bind the texture
+  glActiveTexture(GL_TEXTURE0); // Activate texture unit 0
+  glBindTexture(GL_TEXTURE_2D, groundTexture);
+
+  // Set the texture sampler in the shader to use texture unit 0
+  GLuint textureLocation = glGetUniformLocation(programID, "textureSampler");
+  glUniform1i(textureLocation, 0);
+
+  // Render the ground plane
+  glBindVertexArray(groundVAO);
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+  glBindVertexArray(0);
+}
+
 int main() {
   if (!glfwInit()) {
     return -1;
@@ -75,7 +137,6 @@ int main() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
-
 
   window = glfwCreateWindow(1920, 1080, "Sphere Simulation", NULL, NULL);
   if (!window) {
@@ -104,18 +165,17 @@ int main() {
       LoadShaders("shaders/VertexShader.glsl", "shaders/FragmentShader.glsl");
   GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 
-int width, height;
-glfwGetWindowSize(window, &width, &height);
-float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
-glm::mat4 Projection = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
+  int width, height;
+  glfwGetWindowSize(window, &width, &height);
+  float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
+  glm::mat4 Projection =
+      glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
   glm::mat4 View =
       glm::lookAt(glm::vec3(0, 0, 40), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 
-
-int fbWidth, fbHeight;
-glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
-glViewport(0, 0, fbWidth, fbHeight);
-
+  int fbWidth, fbHeight;
+  glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+  glViewport(0, 0, fbWidth, fbHeight);
 
   float sphere1Radius = 1.0f;
   float sphere2Radius = 1.0f;
@@ -132,9 +192,12 @@ glViewport(0, 0, fbWidth, fbHeight);
 
   GLuint texture1 = loadBMP_custom("textures/ball1.bmp");
   GLuint texture2 = loadBMP_custom("textures/ball2.bmp");
+  GLuint groundTexture = loadBMP_custom("textures/concrete.bmp");
   sphere1.setTexture(texture1);
   sphere2.setTexture(texture2);
 
+  GLuint groundVAO, groundVBO, groundEBO;
+  setupGroundPlane(groundVAO, groundVBO, groundEBO);
   do {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     float deltaTime = getDeltaTime();
@@ -174,6 +237,11 @@ glViewport(0, 0, fbWidth, fbHeight);
     glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP2[0][0]);
     sphere2.draw(programID, MatrixID, MVP2);
 
+    // Render ground plane
+    glm::mat4 groundModel = glm::mat4(1.0f); // Identity matrix for ground
+    glm::mat4 groundMVP = Projection * View * groundModel;
+    renderGroundPlane(groundVAO, groundTexture, programID, MatrixID, groundMVP);
+
     // ImGui UI Rendering
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -196,6 +264,8 @@ glViewport(0, 0, fbWidth, fbHeight);
         sphere2.~Sphere();
         new (&sphere1) Sphere(sphere1Radius, 36, 18);
         new (&sphere2) Sphere(sphere2Radius, 36, 18);
+        sphere1.setTexture(texture1);
+        sphere2.setTexture(texture2);
         parametersSet = true;
         sphere1Pos.y = sphere1Radius - 3.0f; // Keep bottom aligned
         sphere2Pos.y = sphere2Radius - 3.0f; // Keep bottom aligned

@@ -8,36 +8,40 @@
 
 class Sphere {
 public:
-    Sphere(float radius, int sectors, int stacks);
-    ~Sphere();
+  Sphere(float radius, int sectors, int stacks);
+  ~Sphere();
 
-    bool checkCollision(const Sphere& otherSphere);
-    void generateSphere();
-    void draw(GLuint programID, GLuint MatrixID, const glm::mat4& MVP);
-    void update(float deltaTime, float velocity);  // Pass velocity during update
-    void updatePosition(glm::vec3 position);
+  bool checkCollision(const Sphere &otherSphere);
+  void generateSphere();
+  void draw(GLuint programID, GLuint MatrixID, const glm::mat4 &MVP);
+  void update(float deltaTime, float velocity); // Pass velocity during update
+  void updatePosition(glm::vec3 position);
+  void setTexture(GLuint textureID);
 
 private:
-    float radius;
-    int sectors;
-    int stacks;
-    GLuint vertexArrayID;
-    GLuint vertexBuffer;
-    GLuint colorBuffer;
-    GLuint indexBuffer;
+  float radius;
+  int sectors;
+  int stacks;
+  GLuint vertexArrayID;
+  GLuint vertexBuffer;
+  GLuint colorBuffer;
+  GLuint indexBuffer;
+  GLuint textureBuffer;
+  GLuint textureID;
 
-    std::vector<GLfloat> vertices;
-    std::vector<GLfloat> colors;
-    std::vector<GLuint> indices;
+  std::vector<GLfloat> vertices;
+  std::vector<GLfloat> colors;
+  std::vector<GLuint> indices;
+  std::vector<GLfloat> textureCoords;
 
-    glm::vec3 position;  // Position of the sphere
-    float angle;  // Angle of rotation around the y-axis
+  glm::vec3 position; // Position of the sphere
+  float angle;        // Angle of rotation around the y-axis
 
-    void generateVertices();
-    void generateColors();
-    void generateIndices();
-    void moveSphere(float deltaTime, float velocity);
-    void rotateSphere(float deltaTime);
+  void generateVertices();
+  void generateColors();
+  void generateIndices();
+  void moveSphere(float deltaTime, float velocity);
+  void rotateSphere(float deltaTime);
 };
 
 #endif

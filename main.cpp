@@ -1,3 +1,4 @@
+#include "loadTexture.h"
 #include "physics.h"
 #include "shaders.h"
 #include <GL/glew.h>
@@ -12,6 +13,9 @@
 
 GLFWwindow *window;
 static float lastTime = 0.0f;
+
+float sphere1Rotation = 0.0f;
+float sphere2Rotation = 0.0f;
 
 float getDeltaTime() {
   float currentTime = glfwGetTime();
@@ -53,6 +57,10 @@ void resetSimulation(bool &isRunning, bool &parametersSet,
   sphere2MovementSpeed = 0.3f;
   sphere1Radius = 1.0f;
   sphere2Radius = 1.0f;
+
+  // Reset rotation angles
+  sphere1Rotation = 0.0f;
+  sphere2Rotation = 0.0f;
 
   sphere1 = Sphere(sphere1Radius, 36, 18);
   sphere2 = Sphere(sphere2Radius, 36, 18);
@@ -112,23 +120,42 @@ int main() {
   Sphere sphere1(sphere1Radius, 36, 18);
   Sphere sphere2(sphere2Radius, 36, 18);
 
+  GLuint texture1 = loadBMP_custom("textures/ball1.bmp");
+  GLuint texture2 = loadBMP_custom("textures/ball2.bmp");
+  sphere1.setTexture(texture1);
+  sphere2.setTexture(texture2);
+
   do {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     float deltaTime = getDeltaTime();
 
     if (isRunning) {
+      // Update sphere positions
       sphere1Pos.x += sphere1MovementSpeed * deltaTime;
       sphere2Pos.x += sphere2MovementSpeed * deltaTime;
 
       // Check for collision
       checkCollision(sphere1Pos, sphere2Pos, sphere1MovementSpeed,
                      sphere2MovementSpeed, sphere1Radius, sphere2Radius);
+
+      if (sphere1MovementSpeed != 0.0f) {
+        sphere1Rotation +=
+            (sphere1MovementSpeed / sphere1Radius) * deltaTime * 2.0f;
+      }
+      if (sphere2MovementSpeed != 0.0f) {
+        sphere2Rotation +=
+            (sphere2MovementSpeed / sphere2Radius) * deltaTime * 2.0f;
+      }
     }
 
-    glm::mat4 MVP1 =
-        Projection * View * glm::translate(glm::mat4(1.0f), sphere1Pos);
-    glm::mat4 MVP2 =
-        Projection * View * glm::translate(glm::mat4(1.0f), sphere2Pos);
+    // Create transformation matrices
+    glm::mat4 Model1 = glm::translate(glm::mat4(1.0f), sphere1Pos);
+    Model1 = glm::rotate(Model1, -sphere1Rotation, glm::vec3(0.0f, 0.0f, 1.0f));
+    glm::mat4 MVP1 = Projection * View * Model1;
+
+    glm::mat4 Model2 = glm::translate(glm::mat4(1.0f), sphere2Pos);
+    Model2 = glm::rotate(Model2, -sphere2Rotation, glm::vec3(0.0f, 0.0f, 1.0f));
+    glm::mat4 MVP2 = Projection * View * Model2;
 
     glUseProgram(programID);
     glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP1[0][0]);

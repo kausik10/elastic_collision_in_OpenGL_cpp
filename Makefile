@@ -1,7 +1,6 @@
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -I imgui/include/ -I headers/ -Wall -Wextra -O2
-
+CXXFLAGS = -I imgui/include/ -I headers/ -Wall -Wextra -O2 -std=c++17
 # Libraries
 LIBS = -lGL -lGLEW -lglfw
 
